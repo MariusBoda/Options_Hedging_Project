@@ -1,3 +1,6 @@
 /firma1_refinitiv_instructions.pdf
 *.feather
 /data
+Hedging assignment.pdf
+option_ric_tools.py
+FiRMa1_data_fetching.ipynb
