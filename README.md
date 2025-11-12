@@ -23,3 +23,7 @@ This project implements options hedging strategies for the Financial Risk Manage
 - `Hedging assignment.pdf`: Original course assignment specification
 
 The project evaluates how different hedging strategies and parameters affect risk management effectiveness in options portfolios.
+
+![alt text](image.png)
+
+![alt text](image-1.png)
