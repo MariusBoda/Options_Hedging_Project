@@ -22,11 +22,5 @@ This project implements options hedging strategies for the Financial Risk Manage
 - Pandas, NumPy, SciPy
 - Matplotlib for visualization
 
-## Project Structure
-- `hedging_project.ipynb`: Main hedging implementation and analysis
-- `option_ric_tools.py`: Refinitiv data fetching utilities for multiple exchanges
-- `FiRMa1_data_fetching.ipynb`: Data collection and preprocessing examples
-- `Hedging assignment.pdf`: Original course assignment specification
-
 The project evaluates how different hedging strategies and parameters affect risk management effectiveness in options portfolios.
 
