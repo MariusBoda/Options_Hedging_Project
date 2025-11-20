@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from options_lib.bs import black_scholes_delta, implied_volatility
+from options_lib.bs import black_scholes_delta, implied_volatility, black_scholes_vega
 
 def simple_delta_hedging(df, start_date, end_date, option_col, K, r, maturity, freq=1):
     start_idx = df.index.get_loc(start_date)
@@ -138,3 +138,110 @@ def run_hedging_intervals(df, maturity, interval_length=45, step_size=5, num_int
         results.append(stats)
     
     return pd.DataFrame(results)
+
+def delta_vega_hedging(df1, df2, start_date, end_date, option_primary, option_vega, 
+                       K_primary, K_vega, r=0.05, maturity1=None, maturity2=None, freq=1,
+                       transaction_cost_per_share=0.0, transaction_cost_percentage=0.0):
+    """
+    Simulates a delta-vega hedging strategy for a primary option using another option for vega hedging
+    and the underlying asset for delta hedging.
+    """
+    
+    # Extract data for the specified period (assuming dates exist in both)
+    df_hedge = df1.loc[start_date:end_date]
+    OP_primary = df1.loc[start_date:end_date, option_primary].values
+    OP_vega = df2.loc[start_date:end_date, option_vega].values
+    RE = df1.loc[start_date:end_date, 'Close'].values
+    n = len(df_hedge)
+
+    # Greeks for both options
+    deltas_primary = np.zeros(n)
+    deltas_vega = np.zeros(n)
+    vegas_primary = np.zeros(n)
+    vegas_vega = np.zeros(n)
+    iv_primary = np.zeros(n)
+    iv_vega = np.zeros(n)
+    alphas = np.zeros(n)  # vega hedge ratio
+    net_deltas = np.zeros(n)
+
+    # Portfolio tracking
+    shares_held = np.zeros(n)
+    vega_option_held = np.zeros(n)
+    cash_position = np.zeros(n)
+    portfolio_values = np.zeros(n)
+    cumulative_costs = np.zeros(n)
+    pnl = np.zeros(n)
+
+    # Calculate Greeks
+    for i in range(n):
+        T1 = (maturity1 - df_hedge.index[i]).days / 365
+        T2 = (maturity2 - df_hedge.index[i]).days / 365
+        
+        iv_primary[i] = implied_volatility(OP_primary[i], RE[i], K_primary, T1, r)
+        deltas_primary[i] = black_scholes_delta(RE[i], K_primary, T1, r, iv_primary[i])
+        vegas_primary[i] = black_scholes_vega(RE[i], K_primary, T1, r, iv_primary[i])
+        
+        iv_vega[i] = implied_volatility(OP_vega[i], RE[i], K_vega, T2, r)
+        deltas_vega[i] = black_scholes_delta(RE[i], K_vega, T2, r, iv_vega[i])
+        vegas_vega[i] = black_scholes_vega(RE[i], K_vega, T2, r, iv_vega[i])
+        
+        # Vega hedge ratio with bounds
+        if abs(vegas_vega[i]) > 1e-6:
+            raw_alpha = -vegas_primary[i] / vegas_vega[i]
+            alphas[i] = np.clip(raw_alpha, -5.0, 5.0)  # Reasonable bounds
+        else:
+            alphas[i] = 0.0
+        
+        # Net delta after vega hedging
+        net_deltas[i] = deltas_primary[i] + alphas[i] * deltas_vega[i]
+
+    # Initialize portfolio
+    shares_held[0] = -net_deltas[0]
+    vega_option_held[0] = alphas[0]
+    cash_position[0] = (net_deltas[0] * RE[0] - alphas[0] * OP_vega[0]) - OP_primary[0]
+    portfolio_values[0] = OP_primary[0] + shares_held[0] * RE[0] + vega_option_held[0] * OP_vega[0] + cash_position[0]
+    pnl[0] = 0.0
+
+    # Simulate hedging
+    for i in range(1, n):
+        if i % freq == 0 or i == n-1:
+            target_shares = -net_deltas[i]
+            target_vega_option = alphas[i]
+            shares_to_trade = target_shares - shares_held[i-1]
+            vega_option_to_trade = target_vega_option - vega_option_held[i-1]
+            
+            trade_value_shares = abs(shares_to_trade) * RE[i]
+            trade_value_vega = abs(vega_option_to_trade) * OP_vega[i]
+            cost = (abs(shares_to_trade) * transaction_cost_per_share + 
+                   trade_value_shares * transaction_cost_percentage +
+                   abs(vega_option_to_trade) * transaction_cost_per_share + 
+                   trade_value_vega * transaction_cost_percentage)
+            
+            cash_position[i] = cash_position[i-1] - cost - shares_to_trade * RE[i] - vega_option_to_trade * OP_vega[i]
+            shares_held[i] = target_shares
+            vega_option_held[i] = target_vega_option
+            cumulative_costs[i] = cumulative_costs[i-1] + cost
+        else:
+            shares_held[i] = shares_held[i-1]
+            vega_option_held[i] = vega_option_held[i-1]
+            cash_position[i] = cash_position[i-1]
+            cumulative_costs[i] = cumulative_costs[i-1]
+        
+        portfolio_values[i] = OP_primary[i] + shares_held[i] * RE[i] + vega_option_held[i] * OP_vega[i] + cash_position[i]
+        pnl[i] = portfolio_values[i] - portfolio_values[0]
+
+    # Calculate hedging errors (delta hedging error for primary option)
+    A_errors = np.zeros(n - 1)
+    for i in range(n-1):
+        idx = (i // freq) * freq
+        current_net_delta = net_deltas[idx]
+        current_alpha = alphas[idx]
+        dC_primary = OP_primary[i+1] - OP_primary[i]
+        dC_vega = OP_vega[i+1] - OP_vega[i]
+        dR = RE[i+1] - RE[i]
+        A_errors[i] = dC_primary - current_net_delta * dR - current_alpha * dC_vega
+
+    E = np.mean(A_errors**2)
+
+    return (df_hedge, net_deltas, alphas, OP_primary, OP_vega, RE, iv_primary, iv_vega, A_errors, 
+            shares_held, vega_option_held, cash_position, portfolio_values, cumulative_costs, pnl)

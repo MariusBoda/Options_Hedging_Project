@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 import pandas as pd
 import matplotlib.dates as mdates
+import numpy as np
 
 def plot_spy_and_options(df, option_cols):    
     
@@ -355,3 +356,95 @@ def plot_underlying_for_simulation(combined_stats, simulation_idx, data_dict, ti
     plt.tight_layout()
     plt.show()
 
+def plot_delta_vega_hedging(df_hedge, net_deltas, alphas, OP_primary, OP_vega, RE, 
+                           A_errors, shares_held, vega_option_held, portfolio_values, 
+                           cumulative_costs, pnl, title="Delta-Vega Hedging Results"):
+    """
+    Plot comprehensive delta-vega hedging results.
+    
+    Parameters from delta_vega_hedging return tuple:
+    - df_hedge: DataFrame with hedging dates
+    - net_deltas: Net delta exposure after vega hedging
+    - alphas: Vega hedge ratios
+    - OP_primary, OP_vega: Option prices
+    - RE: Underlying prices
+    - A_errors: Hedging errors
+    - shares_held: Underlying shares held
+    - vega_option_held: Vega hedge options held
+    - portfolio_values: Portfolio values over time
+    - cumulative_costs: Transaction costs
+    - pnl: Profit and loss
+    """
+    
+    fig, axes = plt.subplots(3, 2, figsize=(15, 12))
+    fig.suptitle(title, fontsize=16)
+    
+    # Portfolio Value and PnL
+    ax1 = axes[0, 0]
+    ax1.plot(df_hedge.index, portfolio_values, 'b-', linewidth=2, label='Portfolio Value')
+    ax1.set_ylabel('Portfolio Value ($)', color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+    ax1.grid(True, alpha=0.3)
+    ax1.set_title('Portfolio Value')
+    
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(df_hedge.index, pnl, 'r--', alpha=0.7, label='PnL')
+    ax1_twin.set_ylabel('PnL ($)', color='r')
+    ax1_twin.tick_params(axis='y', labelcolor='r')
+    
+    # Hedging Errors
+    ax2 = axes[0, 1]
+    ax2.plot(df_hedge.index[:-1], A_errors, 'g-', alpha=0.8, label='Hedging Errors')
+    ax2.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+    ax2.set_ylabel('Hedging Error ($)')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_title(f'Hedging Errors (MSE: {np.mean(A_errors**2):.4f})')
+    
+    # Positions Held
+    ax3 = axes[1, 0]
+    ax3.plot(df_hedge.index, shares_held, 'b-', linewidth=2, label='Underlying Shares')
+    ax3.set_ylabel('Shares Held', color='b')
+    ax3.tick_params(axis='y', labelcolor='b')
+    ax3.grid(True, alpha=0.3)
+    ax3.set_title('Underlying Shares Position')
+    
+    ax3_twin = ax3.twinx()
+    ax3_twin.plot(df_hedge.index, vega_option_held, 'r-', alpha=0.7, label='Vega Options')
+    ax3_twin.set_ylabel('Vega Options Held', color='r')
+    ax3_twin.tick_params(axis='y', labelcolor='r')
+    
+    # Vega Hedge Ratios
+    ax4 = axes[1, 1]
+    ax4.plot(df_hedge.index, alphas, 'purple', linewidth=2, label='Vega Hedge Ratio')
+    ax4.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+    ax4.set_ylabel('Vega Hedge Ratio')
+    ax4.grid(True, alpha=0.3)
+    ax4.set_title('Vega Hedge Ratios Over Time')
+    
+    # Net Delta Exposure
+    ax5 = axes[2, 0]
+    ax5.plot(df_hedge.index, net_deltas, 'orange', linewidth=2, label='Net Delta')
+    ax5.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+    ax5.set_ylabel('Net Delta')
+    ax5.grid(True, alpha=0.3)
+    ax5.set_title('Net Delta Exposure After Vega Hedging')
+    
+    # Transaction Costs
+    ax6 = axes[2, 1]
+    ax6.plot(df_hedge.index, cumulative_costs, 'brown', linewidth=2, label='Cumulative Costs')
+    ax6.set_ylabel('Transaction Costs ($)')
+    ax6.grid(True, alpha=0.3)
+    ax6.set_title(f'Total Costs: ${cumulative_costs[-1]:.2f}')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Print summary statistics
+    print("=== DELTA-VEGA HEDGING SUMMARY ===")
+    print(f"MSE: {np.mean(A_errors**2):.4f}")
+    print(f"RMSE: {np.sqrt(np.mean(A_errors**2)):.4f}")
+    print(f"Mean Error: {np.mean(A_errors):.4f}")
+    print(f"Final PnL: ${pnl[-1]:.2f}")
+    print(f"Total Costs: ${cumulative_costs[-1]:.2f}")
+    print(f"Average Vega Ratio: {np.mean(alphas):.4f}")
+    print(f"Final Net Delta: {net_deltas[-1]:.4f}")

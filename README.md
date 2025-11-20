@@ -10,15 +10,15 @@ This project implements comprehensive options hedging strategies, demonstrating 
 ### Hedging Metrics Distributions
 ![alt text](plots/image-3.png)
 
-### Portfolio Positions
-![alt text](plots/image.png)
+### Portfolio Value and PnL
+![alt text](plots/image-7.png)
 
 ### Delta Positions
 ![alt text](plots/image-1.png)
 
 ## Key Findings
 
-The project evaluates how different hedging strategies and parameters affect risk management effectiveness in options portfolios. Analysis includes performance metrics such as mean squared error, hedging efficiency ratios, and statistical distributions of hedging outcomes across various market conditions.
+The analysis conducted 157 simulations over 45-day intervals with daily rehedging to evaluate hedging strategy effectiveness. The project examines how different hedging strategies and parameters affect risk management effectiveness in options portfolios. Analysis includes performance metrics such as mean squared error, hedging efficiency ratios, and statistical distributions of hedging outcomes across various market conditions.
 
 ## Features
 - **Data Fetching**: Automated retrieval of historical option and underlying asset prices using Refinitiv Data Platform
@@ -75,5 +75,3 @@ Options_Hedging_Project/
 ├── demo.ipynb            # Main analysis notebook
 └── README.md             # Project documentation
 ```
-
-
