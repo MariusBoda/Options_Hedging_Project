@@ -1,12 +1,24 @@
-# Options_Hedging_Project
+# Options Hedging Project
 
-This project implements options hedging strategies for the Financial Risk Management I course at Aalto University. It demonstrates delta hedging, delta-vega hedging, and delta-gamma hedging of call options using real market data, analyzing hedging performance under different rehedging frequencies and market conditions.
+This project implements comprehensive options hedging strategies, demonstrating delta hedging, delta-vega hedging, and delta-gamma hedging of call options using real market data. It analyzes hedging performance under various rehedging frequencies and market conditions, providing quantitative insights into risk management effectiveness.
 
-![alt text](plots/image-2.png)
+## Analysis Results
 
+### Hedging Statistics
+![alt text](plots/image-4.png)
+
+### Hedging Metrics Distributions
 ![alt text](plots/image-3.png)
 
-![alt text](plots/image-4.png)
+### Portfolio Positions
+![alt text](plots/image.png)
+
+### Delta Positions
+![alt text](plots/image-1.png)
+
+## Key Findings
+
+The project evaluates how different hedging strategies and parameters affect risk management effectiveness in options portfolios. Analysis includes performance metrics such as mean squared error, hedging efficiency ratios, and statistical distributions of hedging outcomes across various market conditions.
 
 ## Features
 - **Data Fetching**: Automated retrieval of historical option and underlying asset prices using Refinitiv Data Platform
@@ -22,5 +34,46 @@ This project implements options hedging strategies for the Financial Risk Manage
 - Pandas, NumPy, SciPy
 - Matplotlib for visualization
 
-The project evaluates how different hedging strategies and parameters affect risk management effectiveness in options portfolios.
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/MariusBoda/Options_Hedging_Project.git
+   cd Options_Hedging_Project
+   ```
+
+2. Install required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Set up Refinitiv Data Platform credentials (optional, synthetic data available for testing)
+
+## Usage
+
+Run the main analysis in Jupyter Notebook:
+```bash
+jupyter notebook demo.ipynb
+```
+
+The project includes modular components in the `options_lib/` directory:
+- `bs.py`: Black-Scholes model implementation
+- `data.py`: Data fetching and processing
+- `hedging.py`: Hedging strategy implementations
+- `plots.py`: Visualization utilities
+
+## Project Structure
+
+```
+Options_Hedging_Project/
+├── options_lib/           # Core library modules
+│   ├── bs.py             # Black-Scholes calculations
+│   ├── data.py           # Data handling
+│   ├── hedging.py        # Hedging algorithms
+│   └── plots.py          # Plotting functions
+├── plots/                # Generated visualizations
+├── demo.ipynb            # Main analysis notebook
+└── README.md             # Project documentation
+```
+
 
