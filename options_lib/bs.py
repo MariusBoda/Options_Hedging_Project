@@ -35,6 +35,15 @@ def black_scholes_vega(S, K, T, r, sigma):
         vega = S * norm.pdf(d1) * np.sqrt(T)
         return vega
 
+def black_scholes_gamma(S, K, T, r, sigma):
+    """Calculate the Black-Scholes gamma of a European call option."""
+    if T <= 0 or sigma <= 0:
+        return 0.0
+    else:
+        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
+        return gamma
+
 def implied_volatility(C_market, S, K, T, r, tol=1e-6, max_iter=100):
     """Calculate the implied volatility using bisection method."""
     if C_market <= 0 or T <= 0:

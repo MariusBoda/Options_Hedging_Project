@@ -13,9 +13,6 @@ This project implements comprehensive options hedging strategies, demonstrating 
 ### Portfolio Value and PnL
 ![alt text](plots/image-7.png)
 
-### Delta Positions
-![alt text](plots/image-1.png)
-
 ## Key Findings
 
 The analysis conducted 157 simulations over 45-day intervals with daily rehedging to evaluate hedging strategy effectiveness. The project examines how different hedging strategies and parameters affect risk management effectiveness in options portfolios. Analysis includes performance metrics such as mean squared error, hedging efficiency ratios, and statistical distributions of hedging outcomes across various market conditions.

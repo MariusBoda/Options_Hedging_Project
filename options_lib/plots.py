@@ -448,3 +448,77 @@ def plot_delta_vega_hedging(df_hedge, net_deltas, alphas, OP_primary, OP_vega, R
     print(f"Total Costs: ${cumulative_costs[-1]:.2f}")
     print(f"Average Vega Ratio: {np.mean(alphas):.4f}")
     print(f"Final Net Delta: {net_deltas[-1]:.4f}")
+
+def plot_delta_vega_gamma_hedging(df_hedge, OP_primary, OP_vega, OP_gamma, RE, A_errors,
+                                   shares_held, vega_option_held, gamma_option_held,
+                                   cash_position, portfolio_values, cumulative_costs, pnl,
+                                   title="Delta-Vega-Gamma Hedging Results"):
+    """
+    Plot comprehensive delta-vega-gamma hedging results.
+    """
+    
+    fig, axes = plt.subplots(3, 2, figsize=(15, 12))
+    fig.suptitle(title, fontsize=16)
+    
+    # Portfolio Value and PnL
+    ax1 = axes[0, 0]
+    ax1.plot(df_hedge.index, portfolio_values, 'b-', linewidth=2, label='Portfolio Value')
+    ax1.set_ylabel('Portfolio Value ($)', color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+    ax1.grid(True, alpha=0.3)
+    ax1.set_title('Portfolio Value')
+    
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(df_hedge.index, pnl, 'r--', alpha=0.7, label='PnL')
+    ax1_twin.set_ylabel('PnL ($)', color='r')
+    ax1_twin.tick_params(axis='y', labelcolor='r')
+    
+    # Hedging Errors
+    ax2 = axes[0, 1]
+    ax2.plot(df_hedge.index[:-1], A_errors, 'g-', alpha=0.8, label='Hedging Errors')
+    ax2.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+    ax2.set_ylabel('Hedging Error ($)')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_title(f'Hedging Errors (MSE: {np.mean(A_errors**2):.4f})')
+    
+    # Positions Held
+    ax3 = axes[1, 0]
+    ax3.plot(df_hedge.index, shares_held, 'b-', linewidth=2, label='Underlying Shares')
+    ax3.set_ylabel('Shares Held', color='b')
+    ax3.tick_params(axis='y', labelcolor='b')
+    ax3.grid(True, alpha=0.3)
+    ax3.set_title('Underlying Shares Position')
+    
+    # Vega and Gamma Positions
+    ax4 = axes[1, 1]
+    ax4.plot(df_hedge.index, vega_option_held, 'r-', alpha=0.7, label='Vega Options')
+    ax4.set_ylabel('Vega Options Held', color='r')
+    ax4.tick_params(axis='y', labelcolor='r')
+    
+    ax4_twin = ax4.twinx()
+    ax4_twin.plot(df_hedge.index, gamma_option_held, 'purple', alpha=0.7, label='Gamma Options')
+    ax4_twin.set_ylabel('Gamma Options Held', color='purple')
+    ax4_twin.tick_params(axis='y', labelcolor='purple')
+    ax4.set_title('Vega and Gamma Option Positions')
+    
+    # Transaction Costs
+    ax5 = axes[2, 0]
+    ax5.plot(df_hedge.index, cumulative_costs, 'brown', linewidth=2, label='Cumulative Costs')
+    ax5.set_ylabel('Transaction Costs ($)')
+    ax5.grid(True, alpha=0.3)
+    ax5.set_title(f'Total Costs: ${cumulative_costs[-1]:.2f}')
+
+    # Remove empty subplot
+    fig.delaxes(axes[2,1])
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Print summary statistics
+    print("=== DELTA-VEGA-GAMMA HEDGING SUMMARY ===")
+    print(f"MSE: {np.mean(A_errors**2):.4f}")
+    print(f"RMSE: {np.sqrt(np.mean(A_errors**2)):.4f}")
+    print(f"Mean Error: {np.mean(A_errors):.4f}")
+    print(f"Final PnL: ${pnl[-1]:.2f}")
+    print(f"Total Costs: ${cumulative_costs[-1]:.2f}")
+
