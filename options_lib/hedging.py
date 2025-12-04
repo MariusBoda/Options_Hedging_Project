@@ -159,6 +159,8 @@ def delta_vega_hedging(df1, df2, start_date, end_date, option_primary, option_ve
     deltas_vega = np.zeros(n)
     vegas_primary = np.zeros(n)
     vegas_vega = np.zeros(n)
+    gammas_primary = np.zeros(n)
+    gammas_vega = np.zeros(n)
     iv_primary = np.zeros(n)
     iv_vega = np.zeros(n)
     alphas = np.zeros(n)  # vega hedge ratio
@@ -179,20 +181,37 @@ def delta_vega_hedging(df1, df2, start_date, end_date, option_primary, option_ve
         
         iv_primary[i] = implied_volatility(OP_primary[i], RE[i], K_primary, T1, r)
         deltas_primary[i] = black_scholes_delta(RE[i], K_primary, T1, r, iv_primary[i])
-        vegas_primary[i] = black_scholes_vega(RE[i], K_primary, T1, r, iv_primary[i])
+        gammas_primary[i] = black_scholes_gamma(RE[i], K_primary, T1, r, iv_primary[i])
         
         iv_vega[i] = implied_volatility(OP_vega[i], RE[i], K_vega, T2, r)
         deltas_vega[i] = black_scholes_delta(RE[i], K_vega, T2, r, iv_vega[i])
         vegas_vega[i] = black_scholes_vega(RE[i], K_vega, T2, r, iv_vega[i])
-        
-        # Vega hedge ratio with bounds
+        gammas_vega[i] = black_scholes_gamma(RE[i], K_vega, T2, r, iv_vega[i])
+
+        # Hedge ratio to minimize gamma, subject to vega neutrality
         if abs(vegas_vega[i]) > 1e-6:
-            raw_alpha = -vegas_primary[i] / vegas_vega[i]
-            alphas[i] = np.clip(raw_alpha, -5.0, 5.0)  # Reasonable bounds
+            # Standard vega hedge ratio
+            alpha_v = -vegas_primary[i] / vegas_vega[i]
+            
+            # Gamma of vega-hedged portfolio
+            net_gamma_v = gammas_primary[i] + alpha_v * gammas_vega[i]
+            
+            # If net gamma is high, adjust alpha to reduce it.
+            # This is a simplified approach; a true multi-objective optimization would be more complex.
+            # Here, we just blend in a gamma-hedging objective.
+            if abs(gammas_vega[i]) > 1e-6:
+                alpha_g = -gammas_primary[i] / gammas_vega[i]
+                # Use a weighted average of the two alphas. 0.5 is an arbitrary weight.
+                alphas[i] = 0.5 * alpha_v + 0.5 * alpha_g
+            else:
+                alphas[i] = alpha_v
         else:
             alphas[i] = 0.0
         
-        # Net delta after vega hedging
+        # Clip for safety
+        alphas[i] = np.clip(alphas[i], -5.0, 5.0)
+        
+        # Net delta after vega (and partial gamma) hedging
         net_deltas[i] = deltas_primary[i] + alphas[i] * deltas_vega[i]
 
     # Initialize portfolio
